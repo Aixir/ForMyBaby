@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What I wheel for you!</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        .wheel-container {
+            position: relative;
+            display: inline-block;
+        }
+        .pointer {
+            position: absolute;
+            top: 50%;
+            left: 368px; /* Moves pointer to the left */
+            transform: translateY(-50%); /* Centers vertically */
+            width: 0;
+            height: 0;
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+            border-right: 40px solid black; /* Thick end on left, pointy end on right */
+        }
+        canvas {
+            border: 5px solid black;
+            border-radius: 50%;
+        }
+        button {
+            margin-top: 20px;
+            padding: 12px 24px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 22px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Wheel For You <3</h1>
+    <div class="wheel-container">
+        <div class="pointer"></div>
+        <canvas id="wheelCanvas" width="400" height="400"></canvas>
+    </div>
+    <button onclick="spinWheel()">Spin the Wheel</button>
+    <div id="result"></div>
+
+    <script>
+        const canvas = document.getElementById("wheelCanvas");
+        const ctx = canvas.getContext("2d");
+        const wheelSections = ["I Love You!", "I Miss You!", "I Believe in You!", "I'm Proud of You!", "Ur so CUTE!", "Ur a Fighter!"];
+        const colors = ["#FF5733", "#33FF57", "#3357FF", "#F3FF33", "#FF33F3", "#33FFF3"];
+        let spinning = false;
+        let spinSound = new Audio('https://www.soundjay.com/button/beep-07.wav'); // Optional sound
+
+        // Draw the Wheel
+        function drawWheel() {
+            const numSections = wheelSections.length;
+            const arcSize = (2 * Math.PI) / numSections;
+
+            for (let i = 0; i < numSections; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = colors[i];
+                ctx.moveTo(200, 200);
+                ctx.arc(200, 200, 200, i * arcSize, (i + 1) * arcSize);
+                ctx.lineTo(200, 200);
+                ctx.fill();
+                ctx.stroke();
+
+                // Text Labels
+                ctx.save();
+                ctx.fillStyle = "black";
+                ctx.translate(200, 200);
+                ctx.rotate(i * arcSize + arcSize / 2);
+                ctx.textAlign = "right";
+                ctx.font = "18px Arial";
+                ctx.fillText(wheelSections[i], 170, 10);
+                ctx.restore();
+            }
+        }
+
+        drawWheel();
+
+        // Spin the Wheel
+        function spinWheel() {
+            if (spinning) return;
+            spinning = true;
+            spinSound.play(); // Play sound
+
+            let spinAngle = Math.floor(3600 + Math.random() * 360); // High value for smooth deceleration
+            let duration = 4000; // Spin duration
+            let start = null;
+
+            function animateSpin(timestamp) {
+                if (!start) start = timestamp;
+                let progress = timestamp - start;
+                let easing = 1 - Math.pow(1 - progress / duration, 3); // Smooth deceleration
+                let currentAngle = (spinAngle * easing) % 360;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.save();
+                ctx.translate(200, 200);
+                ctx.rotate((currentAngle * Math.PI) / 180);
+                ctx.translate(-200, -200);
+                drawWheel();
+                ctx.restore();
+
+                if (progress < duration) {
+                    requestAnimationFrame(animateSpin);
+                } else {
+                    spinning = false;
+                    showResult(currentAngle);
+                }
+            }
+
+            requestAnimationFrame(animateSpin);
+        }
+
+        // Show Result
+        function showResult(finalAngle) {
+            const numSections = wheelSections.length;
+            const arcSize = 360 / numSections;
+            let index = Math.floor(((360 - finalAngle) % 360) / arcSize);
+            document.getElementById("result").innerText = ` ${wheelSections[index]}`;
+        }
+    </script>
+</body>
+</html>
